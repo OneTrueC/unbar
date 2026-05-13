@@ -18,7 +18,7 @@ main(void)
 	void* plugin;
 	plugin_main pl_main;
 
-	plugin = dlopen("./plugin/test.so", RTLD_LAZY | RTLD_LOCAL);
+	plugin = dlopen("./plugin/test.so", RTLD_NOW | RTLD_LOCAL);
 	err = dlerror();
 	if (err != NULL) {
 		printf("%s\n", err);
@@ -42,9 +42,7 @@ main(void)
 int
 dlink(void* plugin)
 {
-	int (**sym)(void);
-
-	sym = dlsym(plugin, "testfunc");
+	void** sym = (void**)dlsym(plugin, "testfunc");
 
 	if (sym) {
 		if (*sym && *sym != &testfunc)

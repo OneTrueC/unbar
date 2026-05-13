@@ -4,8 +4,7 @@ LIB =
 CFLAGS = -Wall -Wextra -std=c99 -pedantic $(INC)
 LDFLAGS = $(LIB) -fPIC -shared
 
-PROFFLAGS = -Os
-BUILDFLAGS = $(PROFFLAGS)
+BUILDFLAGS = -Os
 DEBUGFLAGS = -g3 -Og -fanalyzer
 
 SRC = $(wildcard *.c)
