@@ -14,11 +14,16 @@ int dlink(void* lib);
 int
 main(void)
 {
+	char* err;
 	void* plugin;
 	plugin_main pl_main;
 
 	plugin = dlopen("./plugin/test.so", RTLD_LAZY | RTLD_LOCAL);
-	printf("%s\n", dlerror());
+	err = dlerror();
+	if (err != NULL) {
+		printf("%s\n", err);
+		return 3;
+	}
 	if (!plugin)
 		return 1;
 	*(void**)(&pl_main) = dlsym(plugin, "plugin_main");
@@ -29,7 +34,7 @@ main(void)
 		return -1; //@TODO: error about already linked function
 	}
 
-	pl_main();
+	(*pl_main)();
 
 	return 0;
 }
@@ -37,9 +42,7 @@ main(void)
 int
 dlink(void* plugin)
 {
-	//void** func;
-	//void* func = *(void**)(&testfunc);
-	void** sym;
+	int (**sym)(void);
 
 	sym = dlsym(plugin, "testfunc");
 

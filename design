@@ -1,0 +1,14 @@
+```c
+struct source {
+	void (*init)()
+	void (*cleanup)()
+	void (*update)()
+}
+
+struct widget {
+	void (*init)()
+	void (*cleanup)()
+	void (*draw)()
+	void (*update)()
+}
+```
