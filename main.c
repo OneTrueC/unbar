@@ -42,7 +42,8 @@ main(void)
 int
 dlink(void* plugin)
 {
-	void** sym = (void**)dlsym(plugin, "testfunc");
+	int (**sym)(void);
+	*(void**)(&sym) = dlsym(plugin, "testfunc");
 
 	if (sym) {
 		if (*sym && *sym != &testfunc)
