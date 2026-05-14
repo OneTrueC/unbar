@@ -27,7 +27,6 @@ main(void)
 	dlink(plugin);
 
 	(*pl_main)();
-	dlclose(plugin);
 
 	return 0;
 }
