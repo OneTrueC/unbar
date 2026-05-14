@@ -26,17 +26,25 @@ main(void)
 		printf("%s\n", err);
 		return 3;
 	}
-	if (!plugin)
-		return 1;
+	if (!plugin) {
+        printf("couldn't open plugin");
+        return 1;
+	}
+
 	*(void**)(&pl_main) = dlsym(plugin, "plugin_main");
-	if (!pl_main)
-		return 2;
+	if (!pl_main) {
+	    printf("no entrypoint for plugin_main");
+	    return 2;
+	}
+
 
 	if (dlink(plugin) == -1) {
-		return -1; //@TODO: error about already linked function
+	    printf("could not link plugin");
+		return -1;
 	}
 
 	(*pl_main)();
+	dlclose(plugin);
 
 	return 0;
 }
@@ -48,8 +56,10 @@ dlink(void* plugin)
 	ret (**sym)(__VA_ARGS__);                                                  \
 	*(void**)(&sym) = dlsym(plugin, #name);                                    \
 	if (sym) {                                                                 \
-		if (*sym && *sym != &name)                                             \
+		if (*sym && *sym != &name) {                                           \
+		    printf("plugin has a different function linked");                  \
 			return -1;                                                         \
+        }                                                                      \
 		*sym = &name;                                                          \
 	}                                                                          \
 } while (0)
