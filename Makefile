@@ -1,7 +1,8 @@
 INC = -I. -I/usr/include
 LIB =
+DEF = -DPRGNAME=\"unbar\"
 
-CFLAGS = -Wall -Wextra -std=c99 -pedantic $(INC)
+CFLAGS = -Wall -Wextra -std=c99 -pedantic $(INC) $(DEF)
 LDFLAGS = $(LIB)
 
 PROFFLAGS = -Os

@@ -1,10 +1,9 @@
-/* C quickstart main file */
+/* bar without the status */
 #define _POSIX_C_SOURCE 200809L
-
-#include <stdio.h>
 
 #include <dlfcn.h>
 
+#include "util.h"
 #define HOST
 #include "api.h"
 #undef HOST
@@ -16,32 +15,16 @@ int dlink(void* lib);
 int
 main(void)
 {
-	char* err;
 	void* plugin;
 	plugin_main pl_main;
 
 	plugin = dlopen("./plugin/test.so", RTLD_NOW | RTLD_LOCAL);
-	err = dlerror();
-	if (err != NULL) {
-		printf("%s\n", err);
-		return 3;
-	}
-	if (!plugin) {
-        printf("couldn't open plugin");
-        return 1;
-	}
+	if (!plugin) die(3, "couldn't open plugin: %s", dlerror());
 
 	*(void**)(&pl_main) = dlsym(plugin, "plugin_main");
-	if (!pl_main) {
-	    printf("no entrypoint for plugin_main");
-	    return 2;
-	}
+	if (!pl_main) die(2, "no entrypoint for plugin");
 
-
-	if (dlink(plugin) == -1) {
-	    printf("could not link plugin");
-		return -1;
-	}
+	dlink(plugin);
 
 	(*pl_main)();
 	dlclose(plugin);
@@ -56,10 +39,8 @@ dlink(void* plugin)
 	ret (**sym)(__VA_ARGS__);                                                  \
 	*(void**)(&sym) = dlsym(plugin, #name);                                    \
 	if (sym) {                                                                 \
-		if (*sym && *sym != &name) {                                           \
-		    printf("plugin has a different function linked");                  \
-			return -1;                                                         \
-        }                                                                      \
+		if (*sym && *sym != &name)                                             \
+			die(1, "attempting to link already linked funcion");               \
 		*sym = &name;                                                          \
 	}                                                                          \
 } while (0)
