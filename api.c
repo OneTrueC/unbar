@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#define HOST
+#include "api.h"
+#undef HOST
+
 int
 testfunc(void)
 {
