@@ -1,0 +1,23 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-std=c99",
+      "-pedantic",
+      "-I.",
+      "-I/usr/include",
+      "-I..",
+      "-fPIC",
+      "-Os",
+      "-o",
+      "test.so",
+      "test.c"
+    ],
+    "directory": "/home/drew/Documents/unbar/plugin",
+    "file": "/home/drew/Documents/unbar/plugin/test.c",
+    "output": "/home/drew/Documents/unbar/plugin/test.so"
+  }
+]

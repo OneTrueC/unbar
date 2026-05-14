@@ -1,4 +1,4 @@
-INC = -I. -I/usr/include
+INC = -I. -I/usr/include -I..
 LIB =
 
 CFLAGS = -Wall -Wextra -std=c99 -pedantic $(INC)

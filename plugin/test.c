@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "api-api.h"
+#include "api.h"
 
 void myfunc(void);
 

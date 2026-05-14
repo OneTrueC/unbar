@@ -5,7 +5,9 @@
 
 #include <dlfcn.h>
 
-#include "plugin/api.h"
+#define HOST
+#include "api.h"
+#undef HOST
 
 typedef int (*plugin_main)(void);
 
@@ -42,22 +44,19 @@ main(void)
 int
 dlink(void* plugin)
 {
-	int (**sym)(void);
-	*(void**)(&sym) = dlsym(plugin, "testfunc");
+#define LINK(ret, name, ...) do {                                              \
+	ret (**sym)(__VA_ARGS__);                                                  \
+	*(void**)(&sym) = dlsym(plugin, #name);                                    \
+	if (sym) {                                                                 \
+		if (*sym && *sym != &name)                                             \
+			return -1;                                                         \
+		*sym = &name;                                                          \
+	}                                                                          \
+} while (0)
 
-	if (sym) {
-		if (*sym && *sym != &testfunc)
-			return -1;
-		*sym = &testfunc;
-	}
+#include "api.h"
 
-	return 0;
-}
-
-int
-testfunc(void)
-{
-	printf("this is a function from the host program\n");
+#undef LINK
 
 	return 0;
 }

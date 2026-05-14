@@ -23,7 +23,7 @@ build: $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(BUILDFLAGS)
 	chmod +x $@
 
-plugin/test.so:
+plugin/%.so: plugin/%.c
 	$(MAKE) -C plugin
 
 clean:
