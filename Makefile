@@ -1,9 +1,11 @@
+ISXORG = ${shell ps -e | grep Xorg | sed -e 's/.*Xorg.*/YES/'}
+
 INC = -I. -I/usr/include
 LIB =
 DEF = -DPRGNAME=\"unbar\"
 
-CFLAGS = -Wall -Wextra -std=c99 -pedantic $(INC) $(DEF)
-LDFLAGS = $(LIB)
+CFLAGS := -Wall -Wextra -std=c99 -pedantic $(INC) $(DEF) $(CFLAGS)
+LDFLAGS := $(LIB) $(LDFLAGS)
 
 PROFFLAGS = -Os
 BUILDFLAGS = $(PROFFLAGS) -s
@@ -17,6 +19,17 @@ RUNOPTS =
 CCOMP = $(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o
 
 .PHONY: clean profclean build debug gdb strace memcheck perfprof memprof
+.POSIX:
+
+ifeq (${ISXORG},YES)
+    X11INC := /usr/X11R6/include
+    X11LIB := /usr/X11R6/lib
+    SRC := ${SRC} ws/x.c
+    CFLAGS := ${CFLAGS} -I${X11INC}
+    LDFLAGS := ${LDFLAGS} -L${X11LIB}
+else
+    SRC := ${SRC} ws/y.c
+endif
 
 all: debug
 
