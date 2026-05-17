@@ -5,4 +5,4 @@ struct windowCtx;
 typedef struct windowCtx windowCtx;
 
 /* return windowCtx type pointer (defined per ws) */
-windowCtx* initWs(void);
+windowCtx* initWS(void);
