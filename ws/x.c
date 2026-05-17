@@ -3,19 +3,28 @@
 
 #include <stdlib.h>
 
+#include <X11/Xlib.h>
+
 #include "util.h"
 #include "ws.h"
 
-struct windowCtx {
-	//@TODO
+struct WindowCtx {
+	Display *dpy;
+	int scr;
 };
 
-windowCtx*
+WindowCtx*
 initWS(void)
 {
-	windowCtx* ret = malloc(sizeof(windowCtx));
+	WindowCtx* ret;
 
+	ret = malloc(sizeof(WindowCtx));
 	if (!ret) die(4, "Out of Memory");
+
+	ret->dpy = XOpenDisplay(NULL);
+	if (!ret->dpy) die(5, "failed to connect to X display");
+
+	ret->scr = DefaultScreen(ret->dpy);
 
 	return ret;
 }
