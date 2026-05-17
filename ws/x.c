@@ -52,9 +52,7 @@ createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side)
 	XSetWindowAttributes wa;
 
 	wa.background_pixel = 0xFFFFFFFF;
-	wa.border_pixel = 0;
 	wa.override_redirect = 1;
-
 
 	for (i = 0; i < c->nscreens; i++) {
 		switch (side) {
@@ -87,7 +85,11 @@ createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side)
 		                           height, 0, DefaultDepth(c->dpy, i),
 		                           CopyFromParent, DefaultVisual(c->dpy, i),
 		                           CWOverrideRedirect | CWBackPixel, &wa);
+
+		XMapWindow(c->dpy, c->bars[i]);
 	}
+
+	XSync(c->dpy, c->bars[i]);
 }
 
 void
@@ -96,8 +98,11 @@ destroyBar(WindowCtx* c)
 	int i;
 
 	for (i = 0; i < c->nscreens; i++) {
+		XUnmapWindow(c->dpy, c->bars[i]);
 		XDestroyWindow(c->dpy, c->bars[i]);
 	}
+
+	XSync(c->dpy, 0);
 }
 
 void

@@ -33,7 +33,7 @@ main(void)
 
 	ctx = initWS();
 	createBar(ctx, 20, TOP);
-	sleep(10);
+	sleep(3);
 	destroyBar(ctx);
 	cleanWS(ctx);
 
