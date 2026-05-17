@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #include "util.h"
 #include "ws.h"
@@ -11,6 +12,11 @@
 struct WindowCtx {
 	Display *dpy;
 	int scr;
+	XVisualInfo vinfo;
+	GC gc;
+	/* one bar per screen */
+	int nscreens;
+	Window* bars;
 };
 
 WindowCtx*
@@ -26,5 +32,15 @@ initWS(void)
 
 	ret->scr = DefaultScreen(ret->dpy);
 
+	/* assuming 32bit color depth */
+	XMatchVisualInfo(ret->dpy, ret->scr, 32, TrueColor, &ret->vinfo);
+
 	return ret;
+}
+
+void
+cleanWS(WindowCtx* ctx)
+{
+	XCloseDisplay(ctx->dpy);
+	free(ctx);
 }
