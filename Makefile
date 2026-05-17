@@ -26,7 +26,7 @@ ifeq (${ISXORG},YES)
     X11LIB := /usr/X11R6/lib
     SRC := ${SRC} ws/x.c
     CFLAGS := ${CFLAGS} -I${X11INC}
-    LDFLAGS := ${LDFLAGS} -L${X11LIB}
+    LDFLAGS := ${LDFLAGS} -L${X11LIB} -lX11
 else
     SRC := ${SRC} ws/y.c
 endif

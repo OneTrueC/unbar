@@ -2,8 +2,10 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <dlfcn.h>
+#include <unistd.h>
 
 #include "util.h"
+#include "ws.h"
 #define HOST
 #include "api.h"
 #undef HOST
@@ -17,6 +19,7 @@ main(void)
 {
 	void* plugin;
 	plugin_main pl_main;
+	WindowCtx* ctx;
 
 	plugin = dlopen("./plugin/test.so", RTLD_NOW | RTLD_LOCAL);
 	if (!plugin) die(3, "couldn't open plugin: %s", dlerror());
@@ -27,6 +30,12 @@ main(void)
 	dlink(plugin);
 
 	(*pl_main)();
+
+	ctx = initWS();
+	createBar(ctx, 20, TOP);
+	sleep(10);
+	destroyBar(ctx);
+	cleanWS(ctx);
 
 	return 0;
 }

@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include <assert.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -12,7 +14,6 @@
 struct WindowCtx {
 	Display *dpy;
 	int scr;
-	XVisualInfo vinfo;
 	GC gc;
 	/* one bar per screen */
 	int nscreens;
@@ -26,21 +27,84 @@ initWS(void)
 
 	ret = malloc(sizeof(WindowCtx));
 	if (!ret) die(4, "Out of Memory");
+	assert(ret);
 
 	ret->dpy = XOpenDisplay(NULL);
 	if (!ret->dpy) die(5, "failed to connect to X display");
+	assert(ret->dpy);
 
 	ret->scr = DefaultScreen(ret->dpy);
 
-	/* assuming 32bit color depth */
-	XMatchVisualInfo(ret->dpy, ret->scr, 32, TrueColor, &ret->vinfo);
+	ret->nscreens = ScreenCount(ret->dpy);
+
+	ret->bars = calloc(ret->nscreens, sizeof(Window));
+	if (!ret->bars) die(4, "Out of Memory");
+	assert(ret->bars);
 
 	return ret;
 }
 
 void
-cleanWS(WindowCtx* ctx)
+createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side)
 {
-	XCloseDisplay(ctx->dpy);
-	free(ctx);
+	int i;
+	unsigned int width, height, x, y;
+	XSetWindowAttributes wa;
+
+	wa.background_pixel = 0xFFFFFFFF;
+	wa.border_pixel = 0;
+	wa.override_redirect = 1;
+
+
+	for (i = 0; i < c->nscreens; i++) {
+		switch (side) {
+		case TOP:
+			width = DisplayWidth(c->dpy, i);
+			height = barWidth;
+			x = y = 0;
+			break;
+		case BOTTOM:
+			width = DisplayWidth(c->dpy, i);
+			height = barWidth;
+			x = 0;
+			y = DisplayHeight(c->dpy, i) - height;
+			break;
+		case LEFT:
+			width = barWidth;
+			height = DisplayHeight(c->dpy, i);
+			x = y = 0;
+			break;
+		default:
+		case RIGHT:
+			width = barWidth;
+			height = DisplayHeight(c->dpy, i);
+			x = DisplayWidth(c->dpy, i) - width;
+			y = 0;
+			break;
+		}
+
+		c->bars[i] = XCreateWindow(c->dpy, RootWindow(c->dpy, i), x, y, width,
+		                           height, 0, DefaultDepth(c->dpy, i),
+		                           CopyFromParent, DefaultVisual(c->dpy, i),
+		                           CWOverrideRedirect | CWBackPixel, &wa);
+	}
+}
+
+void
+destroyBar(WindowCtx* c)
+{
+	int i;
+
+	for (i = 0; i < c->nscreens; i++) {
+		XDestroyWindow(c->dpy, c->bars[i]);
+	}
+}
+
+void
+cleanWS(WindowCtx* c)
+{
+	free(c->bars);
+
+	XCloseDisplay(c->dpy);
+	free(c);
 }
