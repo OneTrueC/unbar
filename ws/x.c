@@ -7,16 +7,19 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/Xrandr.h>
 
 #include "util.h"
 #include "ws.h"
 
 struct WindowCtx {
 	Display *dpy;
-	int scr;
 	GC gc;
-	/* one bar per screen */
+	/* one bar per monitor */
 	int nscreens;
+	int* nmonitors;
+	XRRMonitorInfo** minfos;
+	int nbars;
 	Window* bars;
 };
 
@@ -24,6 +27,7 @@ WindowCtx*
 initWS(void)
 {
 	WindowCtx* ret;
+	int i;
 
 	ret = malloc(sizeof(WindowCtx));
 	if (!ret) die(4, "Out of Memory");
@@ -33,11 +37,24 @@ initWS(void)
 	if (!ret->dpy) die(5, "failed to connect to X display");
 	assert(ret->dpy);
 
-	ret->scr = DefaultScreen(ret->dpy);
-
 	ret->nscreens = ScreenCount(ret->dpy);
 
-	ret->bars = calloc(ret->nscreens, sizeof(Window));
+	ret->minfos = calloc(ret->nscreens, sizeof(XRRMonitorInfo*));
+	if (!ret->minfos) die(4, "Out of Memory");
+	assert(ret->minfos);
+
+	ret->nmonitors = calloc(ret->nscreens, sizeof(int*));
+	if (!ret->nmonitors) die(4, "Out of Memory");
+	assert(ret->nmonitors);
+
+	ret->nbars = 0;
+	for (i = 0; i < ret->nscreens; i++) {
+		ret->minfos[i] = XRRGetMonitors(ret->dpy, RootWindow(ret->dpy, i), 1,
+		                                &ret->nmonitors[i]);
+		ret->nbars += ret->nmonitors[i];
+	}
+
+	ret->bars = calloc(ret->nbars, sizeof(Window));
 	if (!ret->bars) die(4, "Out of Memory");
 	assert(ret->bars);
 
@@ -47,49 +64,58 @@ initWS(void)
 void
 createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side)
 {
-	int i;
+	int i, j, barItr;
 	unsigned int width, height, x, y;
 	XSetWindowAttributes wa;
 
 	wa.background_pixel = 0xFFFFFFFF;
 	wa.override_redirect = 1;
 
+	barItr = 0;
 	for (i = 0; i < c->nscreens; i++) {
-		switch (side) {
-		case TOP:
-			width = DisplayWidth(c->dpy, i);
-			height = barWidth;
-			x = y = 0;
-			break;
-		case BOTTOM:
-			width = DisplayWidth(c->dpy, i);
-			height = barWidth;
-			x = 0;
-			y = DisplayHeight(c->dpy, i) - height;
-			break;
-		case LEFT:
-			width = barWidth;
-			height = DisplayHeight(c->dpy, i);
-			x = y = 0;
-			break;
-		default:
-		case RIGHT:
-			width = barWidth;
-			height = DisplayHeight(c->dpy, i);
-			x = DisplayWidth(c->dpy, i) - width;
-			y = 0;
-			break;
+		for (j = 0; j < c->nmonitors[i]; j++) {
+			switch (side) {
+			case TOP:
+				width = c->minfos[i][j].width;
+				height = barWidth;
+				x = c->minfos[i][j].x;
+				y = c->minfos[i][j].y;
+				break;
+			case BOTTOM:
+				width = c->minfos[i][j].width;
+				height = barWidth;
+				x = c->minfos[i][j].x;
+				y = c->minfos[i][j].height - height + c->minfos[i][j].y;
+				break;
+			case LEFT:
+				width = barWidth;
+				height = c->minfos[i][j].height;
+				x = c->minfos[i][j].x;
+				y = c->minfos[i][j].y;
+				break;
+			default:
+			case RIGHT:
+				width = barWidth;
+				height = c->minfos[i][j].height;
+				x = c->minfos[i][j].width - width + c->minfos[i][j].x;
+				y = c->minfos[i][j].y;
+				break;
+			}
+
+			c->bars[barItr] = XCreateWindow(c->dpy, RootWindow(c->dpy, i), x, y,
+			                                width, height, 0,
+			                                DefaultDepth(c->dpy, i),
+			                                CopyFromParent,
+			                                DefaultVisual(c->dpy, i),
+			                                CWOverrideRedirect | CWBackPixel,
+			                                &wa);
+
+			XMapWindow(c->dpy, c->bars[barItr]);
+			barItr++;
 		}
-
-		c->bars[i] = XCreateWindow(c->dpy, RootWindow(c->dpy, i), x, y, width,
-		                           height, 0, DefaultDepth(c->dpy, i),
-		                           CopyFromParent, DefaultVisual(c->dpy, i),
-		                           CWOverrideRedirect | CWBackPixel, &wa);
-
-		XMapWindow(c->dpy, c->bars[i]);
 	}
 
-	XSync(c->dpy, c->bars[i]);
+	XSync(c->dpy, 0);
 }
 
 void
@@ -97,7 +123,7 @@ destroyBar(WindowCtx* c)
 {
 	int i;
 
-	for (i = 0; i < c->nscreens; i++) {
+	for (i = 0; i < c->nbars; i++) {
 		XUnmapWindow(c->dpy, c->bars[i]);
 		XDestroyWindow(c->dpy, c->bars[i]);
 	}
@@ -108,6 +134,13 @@ destroyBar(WindowCtx* c)
 void
 cleanWS(WindowCtx* c)
 {
+	int i;
+
+	for (i = 0; i < c->nscreens; i++)
+		XRRFreeMonitors(c->minfos[i]);
+	free(c->minfos);
+	free(c->nmonitors);
+
 	free(c->bars);
 
 	XCloseDisplay(c->dpy);
