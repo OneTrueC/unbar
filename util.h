@@ -4,6 +4,8 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#define DOOM die(4, "Out of Memory")
+
 enum SIDE {
 	TOP,
 	BOTTOM,

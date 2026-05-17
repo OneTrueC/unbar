@@ -30,7 +30,7 @@ initWS(void)
 	int i;
 
 	ret = malloc(sizeof(WindowCtx));
-	if (!ret) die(4, "Out of Memory");
+	if (!ret) DOOM;
 	assert(ret);
 
 	ret->dpy = XOpenDisplay(NULL);
@@ -40,11 +40,11 @@ initWS(void)
 	ret->nscreens = ScreenCount(ret->dpy);
 
 	ret->minfos = calloc(ret->nscreens, sizeof(XRRMonitorInfo*));
-	if (!ret->minfos) die(4, "Out of Memory");
+	if (!ret->minfos) DOOM;
 	assert(ret->minfos);
 
 	ret->nmonitors = calloc(ret->nscreens, sizeof(int*));
-	if (!ret->nmonitors) die(4, "Out of Memory");
+	if (!ret->nmonitors) DOOM;
 	assert(ret->nmonitors);
 
 	ret->nbars = 0;
@@ -55,7 +55,7 @@ initWS(void)
 	}
 
 	ret->bars = calloc(ret->nbars, sizeof(Window));
-	if (!ret->bars) die(4, "Out of Memory");
+	if (!ret->bars) DOOM;
 	assert(ret->bars);
 
 	return ret;
