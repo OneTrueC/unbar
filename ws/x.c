@@ -17,6 +17,7 @@ struct WindowCtx {
 	GC gc;
 	/* one bar per monitor */
 	int nscreens;
+	XVisualInfo* vinfo;
 	int* nmonitors;
 	XRRMonitorInfo** minfos;
 	int nbars;
@@ -39,6 +40,10 @@ initWS(void)
 
 	ret->nscreens = ScreenCount(ret->dpy);
 
+	ret->vinfo = calloc(ret->nscreens, sizeof(XVisualInfo));
+	if (!ret->vinfo) DOOM;
+	assert(ret->vinfo);
+
 	ret->minfos = calloc(ret->nscreens, sizeof(XRRMonitorInfo*));
 	if (!ret->minfos) DOOM;
 	assert(ret->minfos);
@@ -52,6 +57,8 @@ initWS(void)
 		ret->minfos[i] = XRRGetMonitors(ret->dpy, RootWindow(ret->dpy, i), 1,
 		                                &ret->nmonitors[i]);
 		ret->nbars += ret->nmonitors[i];
+
+		XMatchVisualInfo(ret->dpy, i, 32, TrueColor, &ret->vinfo[i]);
 	}
 
 	ret->bars = calloc(ret->nbars, sizeof(Window));
@@ -70,6 +77,7 @@ createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side)
 
 	wa.background_pixel = 0xFFFFFFFF;
 	wa.override_redirect = 1;
+	wa.border_pixel = 0;
 
 	barItr = 0;
 	for (i = 0; i < c->nscreens; i++) {
@@ -102,13 +110,14 @@ createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side)
 				break;
 			}
 
+			wa.colormap = XCreateColormap(c->dpy, RootWindow(c->dpy, i),
+			                              c->vinfo[i].visual, AllocNone);
+
 			c->bars[barItr] = XCreateWindow(c->dpy, RootWindow(c->dpy, i), x, y,
-			                                width, height, 0,
-			                                DefaultDepth(c->dpy, i),
-			                                CopyFromParent,
-			                                DefaultVisual(c->dpy, i),
-			                                CWOverrideRedirect | CWBackPixel,
-			                                &wa);
+			                                width, height, 0, c->vinfo[i].depth,
+			                                CopyFromParent, c->vinfo[i].visual,
+			                                CWOverrideRedirect | CWBackPixel |
+			                                CWColormap | CWBorderPixel, &wa);
 
 			XMapWindow(c->dpy, c->bars[barItr]);
 			barItr++;
@@ -140,6 +149,8 @@ cleanWS(WindowCtx* c)
 		XRRFreeMonitors(c->minfos[i]);
 	free(c->minfos);
 	free(c->nmonitors);
+
+	free(c->vinfo);
 
 	free(c->bars);
 
