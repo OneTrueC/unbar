@@ -1,19 +1,20 @@
 /* function declarations for wayland functions */
-#include <wayland-client-core.h>
-#include <wayland-client-protocol.h>
 #define _POSIX_C_SOURCE 200809L
 
 #include <wayland-client.h>
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
+
 #include "util.h"
 #include "ws.h"
 
 struct Bar {
-    struct wl_output* output;
-    struct wl_surface* surface;
-    struct zwlr_layer_surface_v1* layer;
-    int height;
-    int width;
-    int configured;
+	struct wl_output* output;
+	struct wl_surface* surface;
+	struct zwlr_layer_surface_v1* layer;
+	int height;
+	int width;
+	int configured;
 };
 
 struct WindowCtx {
