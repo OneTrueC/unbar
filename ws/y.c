@@ -105,7 +105,6 @@ layer_surface_closed(void* data,
 }
 
 static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
-
     .configure = layer_surface_configure,
     .closed = layer_surface_closed
 };
@@ -135,7 +134,7 @@ registry_global(void* data, struct wl_registry* registry,
         output = wl_registry_bind(registry, name, &wl_output_interface, 1);
 
         newbars = realloc(ctx->bars, (ctx->nbars + 1) * sizeof(struct Bar));
-        if (!newbars) DOOM; //lol funny name drew
+        if (!newbars) DOOM;
         ctx->bars = newbars;
 
         memset(&ctx->bars[ctx->nbars], 0, sizeof(struct Bar));
@@ -150,10 +149,13 @@ registry_global(void* data, struct wl_registry* registry,
 static void
 registry_global_remove(void* data, struct wl_registry* registry,
                        uint32_t name) {
-
     (void)data; (void)registry; (void)name;
 }
 
+static const struct wl_registry_listener registry_listener = {
+    .global = registry_global,
+    .global_remove = registry_global_remove,
+};
 
 /*high level functions*/
 WindowCtx*
@@ -165,9 +167,12 @@ initWS(void) {
     if (!ctx) DOOM;
 
     ctx->dpy = wl_display_connect(NULL);
+    if (!ctx->dpy)
+        die(5, "couldn't connect to wayland display");
 
     ctx->registry = wl_display_get_registry(ctx->dpy);
-    if (!ctx->registry) die(5, "couldn't get wayland registry");
+    if (!ctx->registry)
+        die(5, "couldn't get wayland registry");
 
     wl_registry_add_listener(ctx->registry, &registry_listener, ctx);
     wl_display_roundtrip(ctx->dpy);
@@ -263,7 +268,7 @@ createBar(WindowCtx* ctx, unsigned barWidth, enum SIDE side) {
         wl_display_roundtrip(ctx->dpy);
 
         for (int i = 0; i < ctx->nbars; i++) {
-            if (!c->bars[i].configured)
+            if (!ctx->bars[i].configured)
                 die(5, "bar %d was not configured by compositor", i);
         }
 }

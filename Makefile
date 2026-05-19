@@ -28,7 +28,12 @@ ifeq (${ISXORG},YES)
     CFLAGS := ${CFLAGS} -I${X11INC}
     LDFLAGS := ${LDFLAGS} -L${X11LIB} -lX11 -lXrandr
 else
-    SRC := ${SRC} ws/y.c
+	WLSCANNER := $(shell pkg-config --variable=wayland_scanner wayland-scanner)
+    WLROOTSPROT := /usr/share/wlroots/protocol
+    SRC := ${SRC} ws/wl.c wlr-layer-shell-unstable-v1-client-protocol.c
+    CFLAGS := ${CFLAGS} $(shell pkg-config --cflags wayland-client)
+    LDFLAGS := ${LDFLAGS} $(shell pkg-config --libs wayland-client)
+    WLHEADER := wlr-layer-shell-unstable-v1-client-protocol.h
 endif
 
 all: debug
@@ -40,6 +45,12 @@ build: $(SRC) $(PLGIN)
 plugin/%.so: plugin/%.c
 	$(MAKE) -C plugin
 
+wlr-layer-shell-unstable-v1-client-protocol.h: $(WLROOTSPROT)/wlr-layer-shell-unstable-v1.xml
+	$(WLSCANNER) client-header $< $@
+
+wlr-layer-shell-unstable-v1-client-protocol.c: $(WLROOTSPROT)/wlr-layer-shell-unstable-v1.xml
+	$(WLSCANNER) private-code $< $@
+
 clean:
 	rm -f debug
 	rm -f gdb
@@ -48,6 +59,8 @@ clean:
 	rm -f strace
 	rm -f perfprof
 	rm -f memprof
+	rm -f wlr-layer-shell-unstable-v1-client-protocol.h
+	rm -f wlr-layer-shell-unstable-v1-client-protocol.c
 
 profclean:
 	rm -f callgrind.out*
