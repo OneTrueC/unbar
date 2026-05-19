@@ -11,7 +11,7 @@ PROFFLAGS = -Os
 BUILDFLAGS = $(PROFFLAGS) -s
 DEBUGFLAGS = -g3 -Og -fanalyzer
 
-SRC = $(wildcard *.c)
+SRC = $(filter-out wlr-layer-shell-unstable-v1-client-protocol.c xdg-shell-protocol.c, $(wildcard *.c))
 PLGIN = plugin/test.so
 
 RUNOPTS =
@@ -28,17 +28,34 @@ ifeq (${ISXORG},YES)
     CFLAGS := ${CFLAGS} -I${X11INC}
     LDFLAGS := ${LDFLAGS} -L${X11LIB} -lX11 -lXrandr
 else
-    SRC := ${SRC} ws/y.c
+	WLSCANNER := $(shell pkg-config --variable=wayland_scanner wayland-scanner)
+    WLPROTDIR := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
+    WLROOTSPROT := /usr/share/wlroots/protocol
+    SRC := ${SRC} ws/y.c wlr-layer-shell-unstable-v1-client-protocol.c xdg-shell-protocol.c
+    CFLAGS := ${CFLAGS} $(shell pkg-config --cflags wayland-client)
+    LDFLAGS := ${LDFLAGS} $(shell pkg-config --libs wayland-client)
+    WLHEADER := wlr-layer-shell-unstable-v1-client-protocol.h xdg-shell-protocol.h
 endif
 
 all: debug
 
-build: $(SRC) $(PLGIN)
+build: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(BUILDFLAGS)
 	chmod +x $@
 
 plugin/%.so: plugin/%.c
 	$(MAKE) -C plugin
+
+wlr-layer-shell-unstable-v1-client-protocol.h: wlr-layer-shell-unstable-v1.xml
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) client-header $< $@
+wlr-layer-shell-unstable-v1-client-protocol.c: wlr-layer-shell-unstable-v1.xml
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) private-code $< $@
+xdg-shell-protocol.h:
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) client-header \
+	/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml $@
+xdg-shell-protocol.c:
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) private-code \
+	/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml $@
 
 clean:
 	rm -f debug
@@ -48,44 +65,48 @@ clean:
 	rm -f strace
 	rm -f perfprof
 	rm -f memprof
+	rm -f wlr-layer-shell-unstable-v1-client-protocol.h
+	rm -f wlr-layer-shell-unstable-v1-client-protocol.c
+	rm -f xdg-shell-protocol.h
+	rm -f xdg-shell-protocol.c
 
 profclean:
 	rm -f callgrind.out*
 	rm -f massif.out*
 
-debug: $(SRC) $(PLGIN)
+debug: $(WLHEADER) $(SRC) $(PLGIN)
 	@$(CCOMP) $@ $(DEBUGFLAGS)
 	@chmod +x $@
 	@./$@ $(RUNOPTS)
 	@rm -f $@
 
-gdb: $(SRC) $(PLGIN)
+gdb: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(DEBUGFLAGS)
 	chmod +x $@
 	gdb ./$@
 	rm -f ./$@
 
-strace: $(SRC) $(PLGIN)
+strace: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(DEBUGFLAGS)
 	chmod +x $@
 	strace -- ./$@ $(RUNOPTS)
 	rm -f ./$@
 
-memcheck: $(SRC) $(PLGIN)
+memcheck: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(DEBUGFLAGS)
 	chmod +x $@
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s -- \
 	         ./$@ $(RUNOPTS)
 	rm -f $@
 
-threadcheck: $(SRC) $(PLGIN)
+threadcheck: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(DEBUGFLAGS)
 	chmod +x $@
 	valgrind --tool=drd --check-stack-var=yes --free-is-write=yes -- ./$@ \
 	         $(RUNOPTS)
 	rm -f $@
 
-perfprof: $(SRC) $(PLGIN)
+perfprof: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(DEBUGFLAGS) $(PROFFLAGS)
 	chmod +x $@
 	valgrind --tool=callgrind --cache-sim=yes --enable-debuginfod=yes  \
@@ -94,7 +115,7 @@ perfprof: $(SRC) $(PLGIN)
 	callgrind_annotate --auto=yes callgrind.out*
 	rm -f $@
 
-memprof: $(SRC) $(PLGIN)
+memprof: $(WLHEADER) $(SRC) $(PLGIN)
 	$(CCOMP) $@ $(DEBUGFLAGS) $(PROFFLAGS)
 	chmod +x $@
 	valgrind --tool=massif --heap=yes --stacks=yes --threshold=0.0 -- ./$@ \
