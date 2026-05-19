@@ -116,6 +116,7 @@ registry_global(void* data, struct wl_registry* registry,
                 uint32_t name, const char* interface, uint32_t version) {
 
     WindowCtx* ctx = data;
+    (void)version;
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
         ctx->compositor = wl_registry_bind(registry, name,
@@ -164,7 +165,7 @@ initWS(void) {
     WindowCtx* ctx;
 
     ctx = calloc(1, sizeof(WindowCtx));
-    if (!ctx) DOOM;
+    if (!ctx) DOOM; // maybe this
 
     ctx->dpy = wl_display_connect(NULL);
     if (!ctx->dpy)

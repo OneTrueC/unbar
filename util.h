@@ -13,6 +13,6 @@ enum SIDE {
 	RIGHT
 };
 
-void die(int err, const char* msg, ...);
+void die(int err, const char* msg, ...) __attribute__((noreturn));
 
 #endif /* _UTIL_H */
