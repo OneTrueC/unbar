@@ -4,12 +4,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <wayland-client.h>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
-#include "wlr-layer-shell-unstable-v1-client-protocol.h"
+#include "ws/wlr-layer-shell-unstable-v1-client-protocol.h"
 
 #include "util.h"
 #include "ws.h"
@@ -49,7 +48,7 @@ static void layer_surface_closed(void* data, struct zwlr_layer_surface_v1*
                                  layer_surface);
 static void registry_global(void* data, struct wl_registry* registry,
                             uint32_t name, const char* interface,
-                            uint32_t version)
+                            uint32_t version);
 static void registry_global_remove(void* data, struct wl_registry* registry,
                                    uint32_t name);
 
@@ -236,7 +235,7 @@ cleanWS(WindowCtx* ctx)
 void
 createBar(WindowCtx* ctx, unsigned barWidth, enum SIDE side)
 {
-	struct Bar* bar
+	struct Bar* bar;
 
 	for (int i = 0; i < ctx->nbars; i++) {
 		bar = &ctx->bars[i];
@@ -310,6 +309,7 @@ destroyBar(WindowCtx* ctx)
 			zwlr_layer_surface_v1_destroy(ctx->bars[i].layer);
 		if (ctx->bars[i].surface)
 			wl_surface_destroy(ctx->bars[i].surface);
-	
+	}
+
 	wl_display_roundtrip(ctx->dpy);
 }
