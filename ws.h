@@ -9,6 +9,11 @@
 struct WindowCtx;
 typedef struct WindowCtx WindowCtx;
 
+/* struct that will abstract the relevant things for drawing, one per block on
+ * the statusbar */
+struct DrawCtx;
+typedef struct DrawCtx DrawCtx;
+
 /* connect or equivalent to the window system */
 WindowCtx* initWS(void);
 /* destroy/free/etc. all context */
@@ -18,3 +23,16 @@ void cleanWS(WindowCtx* ctx);
 void createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side);
 /* destroy all bar windows */
 void destroyBar(WindowCtx* c);
+
+/* draw a line */
+void drawLine(DrawCtx* c, int x1, int y1, int x2, int y2);
+/* draw a point */
+void drawPoint(DrawCtx* c, int x, int y);
+/* draw an arc */
+void drawArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
+             int angle1, int angle2);
+/* draw rectangle */
+void drawRectangle(DrawCtx* c, int x, int y, unsigned int width,
+                   unsigned int height);
+/* draw text with a font */
+void drawText(DrawCtx* c, int x, int y, char* string, char* font);
