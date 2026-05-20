@@ -1,9 +1,13 @@
 /* function declarations for wayland functions */
+#define _GNU_SOURCE
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include <wayland-client.h>
 #include <wayland-client-core.h>
@@ -13,10 +17,14 @@
 #include "util.h"
 #include "ws.h"
 
+#define BAR_COLOR 0xFFFFFFFF;
+
 struct Bar {
 	struct wl_output* output;
 	struct wl_surface* surface;
 	struct zwlr_layer_surface_v1* layer;
+	struct wl_buffer* buffer;
+	uint32_t* pixels;
 	int height;
 	int width;
 	int configured;
@@ -51,6 +59,8 @@ static void registry_global(void* data, struct wl_registry* registry,
                             uint32_t version);
 static void registry_global_remove(void* data, struct wl_registry* registry,
                                    uint32_t name);
+
+static int create_shm_file(size_t size);
 
 /* listening stuff */
 
@@ -179,6 +189,19 @@ static const struct wl_registry_listener registry_listener = {
 	.global_remove = registry_global_remove,
 };
 
+static int
+create_shm_file(size_t size)
+{
+    int fd = memfd_create("unbar-shm", MFD_CLOEXEC);
+    if (fd < 0)
+        die(5, "memfd_create failed");
+    if (ftruncate(fd, size)) {
+        close(fd);
+        die(5, "ftruncate failed");
+    }
+    return fd;
+}
+
 /* high level functions */
 
 WindowCtx*
@@ -187,7 +210,7 @@ initWS(void)
 	WindowCtx* ctx;
 
 	ctx = calloc(1, sizeof(WindowCtx));
-	if (!ctx) DOOM; // maybe this
+	if (!ctx) DOOM;
 
 	ctx->dpy = wl_display_connect(NULL);
 	if (!ctx->dpy)
@@ -281,17 +304,17 @@ createBar(WindowCtx* ctx, unsigned barWidth, enum SIDE side)
 			break;
 		}
 
-			zwlr_layer_surface_v1_set_size(bar->layer,
-			    (side == TOP || side == BOTTOM) ? 0 : barWidth,
-			    (side == TOP || side == BOTTOM) ? barWidth : 0);
+		zwlr_layer_surface_v1_set_size(bar->layer,
+		    (side == TOP || side == BOTTOM) ? 0 : barWidth,
+		    (side == TOP || side == BOTTOM) ? barWidth : 0);
 
-			zwlr_layer_surface_v1_set_exclusive_zone(bar->layer, barWidth);
+		zwlr_layer_surface_v1_set_exclusive_zone(bar->layer, barWidth);
 
-			zwlr_layer_surface_v1_add_listener(bar->layer,
-			                                   &layer_surface_listener, bar);
+		zwlr_layer_surface_v1_add_listener(bar->layer,
+		                                   &layer_surface_listener, bar);
 
-			wl_surface_commit(bar->surface);
-		}
+		wl_surface_commit(bar->surface);
+	}
 
 		wl_display_roundtrip(ctx->dpy);
 
@@ -299,6 +322,37 @@ createBar(WindowCtx* ctx, unsigned barWidth, enum SIDE side)
 			if (!ctx->bars[i].configured)
 				die(5, "bar %d was not configured by compositor", i);
 		}
+
+	/*drawing*/
+	for (int i = 0; i < ctx->nbars; i++) {
+	    struct Bar* bar = &ctx->bars[i];
+		size_t size = bar->width * bar->height * 4;
+	    struct wl_shm_pool* pool;
+		int fd;
+
+		fd = create_shm_file(size);
+		bar->pixels = mmap(NULL, size, PROT_READ | PROT_WRITE,
+		                   MAP_SHARED, fd, 0);
+		if (bar->pixels == MAP_FAILED)
+			die(5, "mmap failed");
+
+		for (int j = 0; j < bar->width * bar->height; j++) {
+			bar->pixels[j] = BAR_COLOR;
+		}
+
+		pool = wl_shm_create_pool(ctx->shm, fd, size);
+		bar->buffer = wl_shm_pool_create_buffer(pool, 0,
+		                                        bar->width, bar->height,
+                                                bar->width * 4,
+                                                WL_SHM_FORMAT_ARGB8888);
+		wl_shm_pool_destroy(pool);
+		close(fd);
+
+		wl_surface_attach(bar->surface, bar->buffer, 0, 0);
+		wl_surface_damage(bar->surface, 0, 0, bar->width, bar->height);
+		wl_surface_commit(bar->surface);
+	}
+	wl_display_roundtrip(ctx->dpy);
 }
 
 void
