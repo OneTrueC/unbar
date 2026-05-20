@@ -1,0 +1,16 @@
+ws/wlr-layer-shell-unstable-v1-client-protocol.h: ws/wlr-layer-shell-unstable-v1.xml
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) client-header $< $@
+ws/wlr-layer-shell-unstable-v1-client-protocol.c: ws/wlr-layer-shell-unstable-v1.xml
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) private-code $< $@
+ws/xdg-shell-protocol.h:
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) client-header \
+	/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml $@
+ws/xdg-shell-protocol.c:
+	$(shell pkg-config --variable=wayland_scanner wayland-scanner) private-code \
+	/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml $@
+
+wlclean:
+	rm -f ws/wlr-layer-shell-unstable-v1-client-protocol.h
+	rm -f ws/wlr-layer-shell-unstable-v1-client-protocol.c
+	rm -f ws/xdg-shell-protocol.h
+	rm -f ws/xdg-shell-protocol.c
