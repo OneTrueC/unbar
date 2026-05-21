@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <wayland-client.h>
 #include <wayland-client-core.h>
@@ -42,6 +43,19 @@ struct WindowCtx {
 	struct Bar* bars;
 };
 
+struct DrawCtx {
+	uint32_t* pixels;
+	int x;
+	int y;
+	int width;
+	int height;
+	int bar_width;
+};
+
+struct FontObj {
+	char* name;
+};
+
 static void output_geometry(void* data, struct wl_output* output, int x, int y,
                             int pw, int ph, int subpixel, const char* make,
                             const char* model, int transform);
@@ -59,8 +73,8 @@ static void registry_global(void* data, struct wl_registry* registry,
                             uint32_t version);
 static void registry_global_remove(void* data, struct wl_registry* registry,
                                    uint32_t name);
-
 static int create_shm_file(size_t size);
+static inline uint32_t* pixel_at(DrawCtx* ctx, int x, int y);
 
 /* listening stuff */
 
@@ -189,6 +203,8 @@ static const struct wl_registry_listener registry_listener = {
 	.global_remove = registry_global_remove,
 };
 
+/*drawing helper functions*/
+
 static int
 create_shm_file(size_t size)
 {
@@ -200,6 +216,15 @@ create_shm_file(size_t size)
         die(5, "ftruncate failed");
     }
     return fd;
+}
+
+static inline uint32_t*
+pixel_at(DrawCtx* ctx, int x, int y)
+{
+	if (x < 0 || x >= ctx->width || y < 0 || y >= ctx->height)
+		return NULL;
+
+	return &ctx->pixels[(y * ctx->bar_width) + ctx->x + x];
 }
 
 /* high level functions */
@@ -367,3 +392,162 @@ destroyBar(WindowCtx* ctx)
 
 	wl_display_roundtrip(ctx->dpy);
 }
+
+void
+drawPoint(DrawCtx* ctx, int x, int y, Color color)
+{
+	uint32_t* p = pixel_at(ctx, x, y);
+	if (p) *p = (uint32_t)color;
+}
+
+void
+drawLine(DrawCtx* ctx, Line line, Color color)
+{
+	int x0 = line.a.x, y0 = line.a.y;
+	int x1 = line.b.x, y1 = line.b.y;
+	int dx = abs(x1 - x0);
+	int dy = abs(y1 - y0);
+	int sx = x0 < x1 ? 1 : -1;
+	int sy = y0 < y1 ? 1 : -1;
+	int err = dx - dy;
+	int e2;
+
+	while (1) {
+		drawPoint(ctx, x0, y0, color);
+		if (x0 == x1 && y0 == y1) break;
+		e2 = 2 * err;
+		if (e2 > -dy) {
+			err -= dy; x0 += sx;
+		}
+		if (e2 < dx) {
+			err += dx; y0 += sy;
+		}
+
+	}
+}
+
+void
+drawRectangle(DrawCtx *ctx, int x, int y, unsigned int width,
+              unsigned int height, Color color)
+{
+	Line top = {{x, y}, {x + (int)width, y}};
+	Line bottom = {{x, y + (int)height}, {x + (int)width, y + (int)height}};
+	Line left = {{x, y}, {x, y + (int)height}};
+	Line right = {{x + (int)width, y}, {x + (int)width, y + (int)height}};
+
+	drawLine(ctx, top, color);
+	drawLine(ctx, bottom, color);
+	drawLine(ctx, left, color);
+	drawLine(ctx, right, color);
+}
+
+void
+fillRectangle(DrawCtx *ctx, int x, int y, unsigned int width,
+              unsigned int height, Color color)
+{
+	for (int i = y; i < y + (int)height; i++) {
+		for (int j = x; j < x + (int)width; j++) {
+			drawPoint(ctx, j, i, color);
+		}
+	}
+}
+
+void
+drawArc(DrawCtx* ctx, int x, int y, unsigned int width,
+             unsigned int height, int angle1, int angle2, Color color)
+{
+	double cx = x + width / 2.0;
+	double cy = y + height / 2.0;
+	double rx = width / 2.0;
+	double ry = height / 2.0;
+	int steps = 360;
+	double a1 = angle1 * 3.14159265 / 180.0;
+	double a2 = angle2 * 3.14159265 / 180.0;
+	double step = (a2 - a1) / steps;
+	double angle;
+
+	for (int i = 0; i <= steps; i++) {
+		angle = a1 + i * step;
+		drawPoint(ctx, (int)(cx + rx * cos(angle)),
+		         (int)(cy - ry * sin(angle)), color);
+	}
+}
+
+void
+fillArc(DrawCtx* ctx, int x, int y, unsigned int width, unsigned int height,
+        int angle1, int angle2, Color color)
+{
+	double cx = x + width / 2.0;
+	double cy = y + height / 2.0;
+	double rx = width / 2.0;
+	double ry = height / 2.0;
+	int steps = 360;
+	double a1 = angle1 * 3.14159265 / 180.0;
+	double a2 = angle2 * 3.14159265 / 180.0;
+	double step = (a2 - a1) / steps;
+	double angle;
+
+	for (int i = 0; i <= steps; i++) {
+		angle = a1 + i * step;
+
+		Line s = {
+			{(int)cx, (int)cy},
+			{(int)(cx + rx * cos(angle)),
+			 (int)(cy - ry * sin(angle))}
+		};
+
+		drawLine(ctx, s, color);
+	}
+}
+
+void
+drawPolygon(DrawCtx *ctx, Line *lines, Color color)
+{
+	int i = 0;
+	while (lines[i].a.x != -1) {
+		drawLine(ctx, lines[i], color);
+		i++;
+	}
+}
+
+void
+fillPolygon(DrawCtx *ctx, Point *points, Color color)
+{
+	int n = 0;
+	int i, j, y;
+	int minY = points[0].y, maxY = points[0].y;
+
+	while (points[n].x != -1) n++;
+	for (i = 0; i < n; i++) {
+		if (points[i].y < minY) minY = points[i].y;
+		if (points[i].y > maxY) maxY = points[i].y;
+	}
+
+	for (y = minY; y <= maxY; y++) {
+		int nodes[64], node_count = 0;
+		j = n - 1;
+		for (i = 0; i < n; i++) {
+			if ((points[i].y < y && points[j].y >= y) ||
+                (points[j].y < y && points[i].y >= y)) {
+                nodes[node_count++] = points[i].x +
+                    (y - points[i].y) * (points[j].x - points[i].x) /
+                    (points[j].y - points[i].y);
+            }
+            j = i;
+		}
+		for (i = 0; i < node_count - 1; i++) {
+			if (nodes[i] > nodes[i + 1]) {
+				int tmp = nodes[i];
+				nodes[i] = nodes[i+1];
+				nodes[i+1] = tmp;
+			}
+		}
+		for (i = 0; i < node_count; i += 2) {
+			for (j = nodes[i]; j <= nodes[i + 1]; j++) {
+				drawPoint(ctx, j, y, color);
+			}
+		}
+	}
+}
+
+/*TODO - add font stuff*/
