@@ -41,6 +41,8 @@ void drawArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
 void drawRectangle(DrawCtx* c, int x, int y, unsigned int width,
                    unsigned int height, Color color);
 
+//@TODO: drawPolygon from XDrawLines or similar
+
 /* load a font */
 FontObj* loadFont(DrawCtx* c, char* name);
 /* unload a font */
