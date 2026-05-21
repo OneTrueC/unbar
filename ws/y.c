@@ -1,5 +1,4 @@
 /* function declarations for wayland functions */
-#define _GNU_SOURCE
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdint.h>
@@ -209,14 +208,21 @@ static const struct wl_registry_listener registry_listener = {
 static int
 create_shm_file(size_t size)
 {
-    int fd = memfd_create("unbar-shm", MFD_CLOEXEC);
-    if (fd < 0)
-        die(5, "memfd_create failed");
-    if (ftruncate(fd, size)) {
-        close(fd);
-        die(5, "ftruncate failed");
-    }
-    return fd;
+	int fd;
+
+	fd = shm_open("/unbar-shm", O_CLOEXEC | O_RDWR | O_CREAT, 0755);
+
+	if (fd < 0)
+		die(5, "shm_open failed");
+
+	shm_unlink("/unbar-shm");
+
+	if (ftruncate(fd, size)) {
+		close(fd);
+		die(5, "ftruncate failed");
+	}
+
+	return fd;
 }
 
 static inline uint32_t*
