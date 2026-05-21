@@ -14,10 +14,14 @@ typedef struct WindowCtx WindowCtx;
 struct DrawCtx;
 typedef struct DrawCtx DrawCtx;
 
+/* this is probably the best way to deal with fonts */
+struct FontObj;
+typedef struct FontObj FontObj;
+
 /* connect or equivalent to the window system */
 WindowCtx* initWS(void);
 /* destroy/free/etc. all context */
-void cleanWS(WindowCtx* ctx);
+void cleanWS(WindowCtx* c);
 
 /* create bar windows on every monitor */
 void createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side);
@@ -34,5 +38,10 @@ void drawArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
 /* draw rectangle */
 void drawRectangle(DrawCtx* c, int x, int y, unsigned int width,
                    unsigned int height);
+
+/* load a font */
+FontObj* loadFont(DrawCtx* c, char* name);
+/* unload a font */
+void unloadFont(DrawCtx* c, FontObj* font);
 /* draw text with a font */
-void drawText(DrawCtx* c, int x, int y, char* string, char* font);
+void drawText(DrawCtx* c, int x, int y, char* string, FontObj* font);
