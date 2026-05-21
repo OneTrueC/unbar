@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+
 #include <string.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -368,8 +369,8 @@ createBar(WindowCtx* ctx, unsigned barWidth, enum SIDE side)
 		pool = wl_shm_create_pool(ctx->shm, fd, size);
 		bar->buffer = wl_shm_pool_create_buffer(pool, 0,
 		                                        bar->width, bar->height,
-                                                bar->width * 4,
-                                                WL_SHM_FORMAT_ARGB8888);
+		                                        bar->width * 4,
+		                                        WL_SHM_FORMAT_ARGB8888);
 		wl_shm_pool_destroy(pool);
 		close(fd);
 
@@ -461,8 +462,8 @@ drawArc(DrawCtx* ctx, int x, int y, unsigned int width,
 	double rx = width / 2.0;
 	double ry = height / 2.0;
 	int steps = 360;
-	double a1 = angle1 * 3.14159265 / 180.0;
-	double a2 = angle2 * 3.14159265 / 180.0;
+	double a1 = angle1 * M_PI / 180.0;
+	double a2 = angle2 * M_PI / 180.0;
 	double step = (a2 - a1) / steps;
 	double angle;
 
@@ -482,8 +483,8 @@ fillArc(DrawCtx* ctx, int x, int y, unsigned int width, unsigned int height,
 	double rx = width / 2.0;
 	double ry = height / 2.0;
 	int steps = 360;
-	double a1 = angle1 * 3.14159265 / 180.0;
-	double a2 = angle2 * 3.14159265 / 180.0;
+	double a1 = angle1 * M_PI / 180.0;
+	double a2 = angle2 * M_PI / 180.0;
 	double step = (a2 - a1) / steps;
 	double angle;
 
@@ -528,12 +529,12 @@ fillPolygon(DrawCtx *ctx, Point *points, Color color)
 		j = n - 1;
 		for (i = 0; i < n; i++) {
 			if ((points[i].y < y && points[j].y >= y) ||
-                (points[j].y < y && points[i].y >= y)) {
-                nodes[node_count++] = points[i].x +
-                    (y - points[i].y) * (points[j].x - points[i].x) /
-                    (points[j].y - points[i].y);
-            }
-            j = i;
+			    (points[j].y < y && points[i].y >= y)) {
+				nodes[node_count++] = points[i].x +
+				    (y - points[i].y) * (points[j].x - points[i].x) /
+				    (points[j].y - points[i].y);
+			}
+			j = i;
 		}
 		for (i = 0; i < node_count - 1; i++) {
 			if (nodes[i] > nodes[i + 1]) {
