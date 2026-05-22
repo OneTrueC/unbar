@@ -408,10 +408,10 @@ drawPoint(DrawCtx* ctx, int x, int y, Color color)
 }
 
 void
-drawLine(DrawCtx* ctx, Line line, Color color)
+drawLine(DrawCtx* ctx, Point a, Point b, Color color)
 {
-	int x0 = line.a.x, y0 = line.a.y;
-	int x1 = line.b.x, y1 = line.b.y;
+	int x0 = a.x, y0 = a.y;
+	int x1 = b.x, y1 = b.y;
 	int dx = abs(x1 - x0);
 	int dy = abs(y1 - y0);
 	int sx = x0 < x1 ? 1 : -1;
@@ -508,32 +508,30 @@ fillArc(DrawCtx* ctx, int x, int y, unsigned int width, unsigned int height,
 }
 
 void
-drawPolygon(DrawCtx *ctx, Line *lines, Color color)
+drawPolygon(DrawCtx *ctx, Point *points, int npoints, Color color)
 {
-	int i = 0;
-	while (lines[i].a.x != -1) {
-		drawLine(ctx, lines[i], color);
-		i++;
-	}
+	if (npoints < 2)
+		return;
+
+	for (i = 1; i < npoints; i++)
+		drawLine(ctx, points[i - 1], points[i], color);
 }
 
 void
-fillPolygon(DrawCtx *ctx, Point *points, Color color)
+fillPolygon(DrawCtx *ctx, Point *points, int npoints, Color color)
 {
-	int n = 0;
 	int i, j, y;
 	int minY = points[0].y, maxY = points[0].y;
 
-	while (points[n].x != -1) n++;
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < npoints; i++) {
 		if (points[i].y < minY) minY = points[i].y;
 		if (points[i].y > maxY) maxY = points[i].y;
 	}
 
 	for (y = minY; y <= maxY; y++) {
 		int nodes[64], node_count = 0;
-		j = n - 1;
-		for (i = 0; i < n; i++) {
+		j = npoints - 1;
+		for (i = 0; i < npoints; i++) {
 			if ((points[i].y < y && points[j].y >= y) ||
 			    (points[j].y < y && points[i].y >= y)) {
 				nodes[node_count++] = points[i].x +

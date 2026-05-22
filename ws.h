@@ -23,11 +23,6 @@ typedef struct {
 	int y;
 } Point;
 
-typedef struct {
-	Point a;
-	Point b;
-} Line;
-
 /* this is probably the best way to deal with fonts */
 struct FontObj;
 typedef struct FontObj FontObj;
@@ -43,7 +38,7 @@ void createBar(WindowCtx* c, unsigned int barWidth, enum SIDE side);
 void destroyBar(WindowCtx* c);
 
 /* draw a line */
-void drawLine(DrawCtx* c, Line line, Color color);
+void drawLine(DrawCtx* c, Point a, Point b, Color color);
 /* draw a point */
 void drawPoint(DrawCtx* c, int x, int y, Color color);
 /* draw an arc */
@@ -53,7 +48,7 @@ void drawArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
 void drawRectangle(DrawCtx* c, int x, int y, unsigned int width,
                    unsigned int height, Color color);
 /* draw a polygon */
-void drawPolygon(DrawCtx* c, Line lines[], Color color);
+void drawPolygon(DrawCtx* c, Point points[], int npoints, Color color);
 
 /* draw a filled arc */
 void fillArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
@@ -62,7 +57,7 @@ void fillArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
 void fillRectangle(DrawCtx* c, int x, int y, unsigned int width,
                    unsigned int height, Color color);
 /* draw a filled polygon */
-void fillPolygon(DrawCtx* c, Point points[], Color color);
+void fillPolygon(DrawCtx* c, Point points[], int npoints, Color color);
 
 /* load a font */
 FontObj* loadFont(DrawCtx* c, char* name);

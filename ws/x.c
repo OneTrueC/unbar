@@ -14,7 +14,6 @@
 
 struct WindowCtx {
 	Display *dpy;
-	GC gc;
 	/* one bar per monitor */
 	int nscreens;
 	XVisualInfo* vinfo;
@@ -22,6 +21,14 @@ struct WindowCtx {
 	XRRMonitorInfo** minfos;
 	int nbars;
 	Window* bars;
+};
+
+struct DrawCtx {
+	Pixmap pxm;
+	WindowCtx* win;
+	GC gc;
+	unsigned int width;
+	unsigned int height;
 };
 
 WindowCtx*
@@ -156,4 +163,84 @@ cleanWS(WindowCtx* c)
 
 	XCloseDisplay(c->dpy);
 	free(c);
+}
+
+#define SETCOLOR XSetForeground(c->win->dpy, c->gc, color)
+
+void
+drawLine(DrawCtx *c, Point a, Point b, Color color)
+{
+	SETCOLOR;
+	XDrawLine(c->win->dpy, c->pxm, c->gc, a.x, a.y, b.x, b.y);
+}
+
+void
+drawPoint(DrawCtx *c, int x, int y, Color color)
+{
+	SETCOLOR;
+	XDrawPoint(c->win->dpy, c->pxm, c->gc, x, y);
+}
+
+void
+drawArc(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+        int angle1, int angle2, Color color)
+{
+	SETCOLOR;
+	XDrawArc(c->win->dpy, c->pxm, c->gc, x, y, width, height, angle1, angle2);
+}
+
+void
+drawRectangle(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+              Color color)
+{
+	SETCOLOR;
+	XDrawRectangle(c->win->dpy, c->pxm, c->gc, x, y, width, height);
+}
+
+void
+drawPolygon(DrawCtx *c, Point points[], int npoints, Color color)
+{
+	int i;
+	XPoint xpoints[npoints];
+
+	for (i = 0; i < npoints; i++) {
+		xpoints[i].x = points[i].x;
+		xpoints[i].y = points[i].y;
+	}
+
+	SETCOLOR;
+	XDrawLines(c->win->dpy, c->pxm, c->gc, xpoints, npoints, CoordModeOrigin);
+}
+
+void
+fillArc(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+        int angle1, int angle2, Color color)
+{
+
+	SETCOLOR;
+	XFillArc(c->win->dpy, c->pxm, c->gc, x, y, width, height, angle1, angle2);
+}
+
+void
+fillRectangle(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+              Color color)
+{
+	SETCOLOR;
+	XFillRectangle(c->win->dpy, c->pxm, c->gc, x, y, width, height);
+}
+
+void
+fillPolygon(DrawCtx *c, Point points[], int npoints, Color color)
+{
+	int i;
+	XPoint xpoints[npoints];
+
+	for (i = 0; i < npoints; i++) {
+		xpoints[i].x = points[i].x;
+		xpoints[i].y = points[i].y;
+	}
+
+	SETCOLOR;
+	XFillPolygon(c->win->dpy, c->pxm, c->gc, xpoints, npoints, Complex,
+	             CoordModeOrigin);
 }
