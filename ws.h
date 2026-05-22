@@ -1,8 +1,6 @@
 /* function declarations for window system functions */
 #define _POSIX_C_SOURCE 200809L
 
-#define M_PI 3.14159265358979323846
-
 #include "util.h"
 
 /* the WindowCtx interface and all relevant functions are defined per window

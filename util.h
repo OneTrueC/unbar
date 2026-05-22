@@ -6,6 +6,8 @@
 
 #define DOOM die(4, "Out of Memory")
 
+#define M_PI 3.14159265358979323846
+
 enum SIDE {
 	TOP,
 	BOTTOM,
