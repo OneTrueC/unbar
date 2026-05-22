@@ -7,3 +7,4 @@ memcheck
 threadcheck
 memprof
 perfprof
+compile_commands.json
