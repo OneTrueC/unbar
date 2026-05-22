@@ -1,29 +1,12 @@
 /* function declarations for window system functions */
 #define _POSIX_C_SOURCE 200809L
 
+#ifndef _WS_H
+#define _WS_H
+
 #include "util.h"
-
-/* the WindowCtx interface and all relevant functions are defined per window
- * system, (i.e. x.c and y.c define all the same functions with identical
- * interfaces but the context is entirely different. */
-struct WindowCtx;
-typedef struct WindowCtx WindowCtx;
-
-/* struct that will abstract the relevant things for drawing, one per block on
- * the statusbar */
-struct DrawCtx;
-typedef struct DrawCtx DrawCtx;
-
-typedef unsigned long Color;
-
-typedef struct {
-	int x;
-	int y;
-} Point;
-
-/* this is probably the best way to deal with fonts */
-struct FontObj;
-typedef struct FontObj FontObj;
+#include "unbar.h"
+#include "ws-types.h"
 
 /* connect or equivalent to the window system */
 WindowCtx* initWS(void);
@@ -64,3 +47,8 @@ void unloadFont(DrawCtx* c, FontObj* font);
 /* draw text with a font */
 void drawText(DrawCtx* c, int x, int y, char* string, FontObj* font,
               Color color);
+
+/* copy content from widget buffer to bar */
+void drawBlock(WindowCtx* c, Block block, int bar, int x, int y);
+
+#endif /* _WS_H */

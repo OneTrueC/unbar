@@ -11,6 +11,7 @@
 
 #include "util.h"
 #include "ws.h"
+#include "unbar.h"
 
 struct WindowCtx {
 	Display *dpy;
@@ -168,21 +169,21 @@ cleanWS(WindowCtx* c)
 #define SETCOLOR XSetForeground(c->win->dpy, c->gc, color)
 
 void
-drawLine(DrawCtx *c, Point a, Point b, Color color)
+drawLine(DrawCtx* c, Point a, Point b, Color color)
 {
 	SETCOLOR;
 	XDrawLine(c->win->dpy, c->pxm, c->gc, a.x, a.y, b.x, b.y);
 }
 
 void
-drawPoint(DrawCtx *c, int x, int y, Color color)
+drawPoint(DrawCtx* c, int x, int y, Color color)
 {
 	SETCOLOR;
 	XDrawPoint(c->win->dpy, c->pxm, c->gc, x, y);
 }
 
 void
-drawArc(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+drawArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
         int angle1, int angle2, Color color)
 {
 	SETCOLOR;
@@ -190,7 +191,7 @@ drawArc(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
 }
 
 void
-drawRectangle(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+drawRectangle(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
               Color color)
 {
 	SETCOLOR;
@@ -198,7 +199,7 @@ drawRectangle(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
 }
 
 void
-drawPolygon(DrawCtx *c, Point points[], int npoints, Color color)
+drawPolygon(DrawCtx* c, Point points[], int npoints, Color color)
 {
 	int i;
 	XPoint xpoints[npoints];
@@ -213,7 +214,7 @@ drawPolygon(DrawCtx *c, Point points[], int npoints, Color color)
 }
 
 void
-fillArc(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+fillArc(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
         int angle1, int angle2, Color color)
 {
 
@@ -222,7 +223,7 @@ fillArc(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
 }
 
 void
-fillRectangle(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
+fillRectangle(DrawCtx* c, int x, int y, unsigned int width, unsigned int height,
               Color color)
 {
 	SETCOLOR;
@@ -230,7 +231,7 @@ fillRectangle(DrawCtx *c, int x, int y, unsigned int width, unsigned int height,
 }
 
 void
-fillPolygon(DrawCtx *c, Point points[], int npoints, Color color)
+fillPolygon(DrawCtx* c, Point points[], int npoints, Color color)
 {
 	int i;
 	XPoint xpoints[npoints];
@@ -243,4 +244,11 @@ fillPolygon(DrawCtx *c, Point points[], int npoints, Color color)
 	SETCOLOR;
 	XFillPolygon(c->win->dpy, c->pxm, c->gc, xpoints, npoints, Complex,
 	             CoordModeOrigin);
+}
+
+void
+drawBlock(WindowCtx* c, Block block, int bar, int x, int y)
+{
+	XCopyArea(c->dpy, block.draw->pxm, c->bars[bar], block.draw->gc, 0, 0,
+	          block.draw->width, block.draw->height, x, y);
 }
