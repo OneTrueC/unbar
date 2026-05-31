@@ -1,3 +1,4 @@
+# vim: set noet tw=80 ts=4:
 INC = -I. -I/usr/include -I..
 LIB =
 

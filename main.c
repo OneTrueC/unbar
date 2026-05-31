@@ -1,4 +1,5 @@
-/* bar without the status */
+/* bar without the status
+ * vim: set noet tw=80 ts=4: */
 #define _POSIX_C_SOURCE 200809L
 
 #include <dlfcn.h>

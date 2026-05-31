@@ -1,4 +1,5 @@
-/* api function definitions */
+/* api function definitions
+ * vim: set noet tw=80 ts=4: */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>

@@ -1,3 +1,4 @@
+# vim: set noet tw=80 ts=4:
 ISXORG = ${shell ps -e | grep Xorg | sed -e 's/.*Xorg.*/YES/'}
 
 INC = -I. -I/usr/include

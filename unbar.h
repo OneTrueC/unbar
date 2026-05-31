@@ -1,4 +1,5 @@
-/* unbar centric suchlikes */
+/* unbar centric suchlikes
+ * vim: set noet tw=80 ts=4: */
 #define _POSIX_C_SOURCE 200809L
 
 #ifndef _UNBAR_H

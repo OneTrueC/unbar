@@ -1,4 +1,5 @@
-/* ws types that can be used across different h files */
+/* ws types that can be used across different h files
+ * vim: set noet tw=80 ts=4: */
 #define _POSIX_C_SOURCE 200809L
 
 #ifndef _WS_TYPES_H

@@ -1,4 +1,5 @@
-/* function declarations for window system functions */
+/* function declarations for window system functions
+ * vim: set noet tw=80 ts=4: */
 #define _POSIX_C_SOURCE 200809L
 
 #ifndef _WS_H

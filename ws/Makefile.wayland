@@ -1,3 +1,4 @@
+# vim: set noet tw=80 ts=4:
 ws/wlr-layer-shell-unstable-v1-client-protocol.h: ws/wlr-layer-shell-unstable-v1.xml
 	`pkg-config --variable=wayland_scanner wayland-scanner` client-header $< $@
 ws/wlr-layer-shell-unstable-v1-client-protocol.c: ws/wlr-layer-shell-unstable-v1.xml
